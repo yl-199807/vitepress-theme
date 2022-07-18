@@ -1,7 +1,13 @@
 // 参考 https://github.com/element-plus/element-plus/blob/dev/website/md-loader/index.js
 // 参考 https://github.com/calebman/vuepress-plugin-demo-container/blob/master/src/index.js
+const fs = require('fs')
 const mdContainer = require('markdown-it-container')
 const { highlight } = require('vitepress/dist/node/markdown/plugins/highlight')
+
+const updateContent = (tokens) => {
+  const str = fs.readFileSync(tokens.src).toString('ascii')
+  tokens.content = str
+}
 
 const blockPlugin = md => {
   md.use(mdContainer, 'demo', {
@@ -10,6 +16,13 @@ const blockPlugin = md => {
     },
     render(tokens, idx) {
       // const m = tokens[idx].info.trim().match(/^demo\s*(.*)$/)
+      if(tokens[idx+1].content === '' && tokens[idx+1].src) {
+        // TODO watch 生效但是页面未更新 https://github.com/vuejs/vitepress/issues/117
+        fs.watch(tokens[idx+1].src, () => {
+          updateContent(tokens[idx+1])
+        })
+        updateContent(tokens[idx+1])
+      }
       if (tokens[idx].nesting === 1) {
         // const description = m && m.length > 1 ? m[1] : ''
         const content = tokens[idx + 1].type === 'fence' ? tokens[idx + 1].content : ''
